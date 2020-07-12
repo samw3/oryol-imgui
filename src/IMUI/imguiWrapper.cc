@@ -207,9 +207,7 @@ void
 imguiWrapper::NewFrame(float frameDurationInSeconds) {
 
     ImGuiIO& io = ImGui::GetIO();
-    DisplayAttrs dispAttrs = Gfx::PassAttrs();
-    o_assert_dbg((dispAttrs.FramebufferWidth > 0) && (dispAttrs.FramebufferHeight > 0));
-    io.DisplaySize = ImVec2((float)dispAttrs.FramebufferWidth, (float)dispAttrs.FramebufferHeight);
+    io.DisplaySize = ImVec2((float)Gfx::GfxSetup().Width, (float)Gfx::GfxSetup().Height);
     io.DeltaTime = frameDurationInSeconds;
 
     // transfer input
@@ -309,6 +307,10 @@ imguiWrapper::imguiRenderDrawLists(ImDrawData* draw_data) {
     Gfx::UpdateIndices(self->drawState.Mesh[0], self->indexData, indexDataSize);
     Id curTexture;
     int elmOffset = 0;
+    const DisplayAttrs dispAttrs = Gfx::PassAttrs();
+    o_assert_dbg((dispAttrs.FramebufferWidth > 0) && (dispAttrs.FramebufferHeight > 0));
+    float xScale = Gfx::GfxSetup().Width / (float)dispAttrs.FramebufferWidth;
+    float yScale = Gfx::GfxSetup().Height / (float)dispAttrs.FramebufferHeight;
     for (int cmdListIndex = 0; cmdListIndex < numCmdLists; cmdListIndex++) {
         const ImDrawList* cmd_list = draw_data->CmdLists[cmdListIndex];
         const ImDrawCmd* pcmd_end = cmd_list->CmdBuffer.end();
@@ -329,10 +331,11 @@ imguiWrapper::imguiRenderDrawLists(ImDrawData* draw_data) {
                     Gfx::ApplyDrawState(self->drawState);
                     Gfx::ApplyUniformBlock(vsParams);
                 }
-                Gfx::ApplyScissorRect((int)pcmd->ClipRect.x,
-                                      (int)(height - pcmd->ClipRect.w),
-                                      (int)(pcmd->ClipRect.z - pcmd->ClipRect.x),
-                                      (int)(pcmd->ClipRect.w - pcmd->ClipRect.y));
+                const int x = pcmd->ClipRect.x / xScale;
+                const int y = (height - pcmd->ClipRect.w) / yScale;
+                const int w = (pcmd->ClipRect.z - pcmd->ClipRect.x) / xScale;
+                const int h = (pcmd->ClipRect.w - pcmd->ClipRect.y) / yScale;
+                Gfx::ApplyScissorRect(x,y,w,h);
                 Gfx::Draw(PrimitiveGroup(elmOffset, pcmd->ElemCount));
             }
             elmOffset += pcmd->ElemCount;
@@ -342,4 +345,4 @@ imguiWrapper::imguiRenderDrawLists(ImDrawData* draw_data) {
 }
 
 } // namespace _priv
-} // namespace Oryol
+} // namespace
