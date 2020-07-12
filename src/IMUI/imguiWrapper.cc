@@ -207,7 +207,9 @@ void
 imguiWrapper::NewFrame(float frameDurationInSeconds) {
 
     ImGuiIO& io = ImGui::GetIO();
-    io.DisplaySize = ImVec2((float)Gfx::GfxSetup().Width, (float)Gfx::GfxSetup().Height);
+    const DisplayAttrs dispAttrs = Gfx::PassAttrs();
+    o_assert_dbg((dispAttrs.FramebufferWidth > 0) && (dispAttrs.FramebufferHeight > 0));
+    io.DisplaySize = ImVec2((float)dispAttrs.WindowWidth, (float)dispAttrs.WindowHeight);
     io.DeltaTime = frameDurationInSeconds;
 
     // transfer input
@@ -309,8 +311,8 @@ imguiWrapper::imguiRenderDrawLists(ImDrawData* draw_data) {
     int elmOffset = 0;
     const DisplayAttrs dispAttrs = Gfx::PassAttrs();
     o_assert_dbg((dispAttrs.FramebufferWidth > 0) && (dispAttrs.FramebufferHeight > 0));
-    float xScale = Gfx::GfxSetup().Width / (float)dispAttrs.FramebufferWidth;
-    float yScale = Gfx::GfxSetup().Height / (float)dispAttrs.FramebufferHeight;
+    float xScale = (float)dispAttrs.WindowWidth / (float)dispAttrs.FramebufferWidth;
+    float yScale = (float)dispAttrs.WindowHeight / (float)dispAttrs.FramebufferHeight;
     for (int cmdListIndex = 0; cmdListIndex < numCmdLists; cmdListIndex++) {
         const ImDrawList* cmd_list = draw_data->CmdLists[cmdListIndex];
         const ImDrawCmd* pcmd_end = cmd_list->CmdBuffer.end();
